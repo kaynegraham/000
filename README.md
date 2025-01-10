@@ -8,7 +8,7 @@ Standalone 000 script for FiveM!
 - Realistic
 
 ### Information:
-Forum Post: <br>
+Forum Post: _Coming Soon_ <br>
 Preview: https://youtu.be/LFHPwfz0rZ4 <br>
 Discord: devkayne
 <br>
