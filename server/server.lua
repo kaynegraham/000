@@ -30,7 +30,7 @@ RegisterCommand(Config.command, function(source, args, raw)
         return 
     end 
 
-    if string.len(tostring(args[1])) > 5 then
+    if string.len(tostring(args[1])) > 6 then
         TriggerClientEvent("chat:addMessage", source, { color = { 255,0,0}, args = {"[000]:", "That is not a valid department."}})
         return 
     end 
@@ -51,10 +51,10 @@ RegisterCommand(Config.command, function(source, args, raw)
     TriggerClientEvent('000:getStreets', source, coords)
     Wait(500)
 
-    if departmentRequired == "leo" then 
+    if departmentRequired == "police" then 
         TriggerClientEvent('000:phoneAnimation', source)
         for _, unit in ipairs(globalActiveUnits) do 
-            if unit.department == "leo" then
+            if unit.department == "police" then
             TriggerClientEvent('chat:addMessage', unit.id, {
                 color = {0,0,255},
                 args = {"[Police Dispatch]:", "Call ID: **" .. string.upper(callId) .. "** has been generated, caller reports " .. callDescription .. " at: " .. location .. "   A GPS location has been sent to your MDT."},
@@ -91,7 +91,7 @@ RegisterCommand(Config.command, function(source, args, raw)
         end
     end
 
-    if departmentRequired ~= "leo" and departmentRequired ~= "medic" and departmentRequired ~= "fire" then 
+    if departmentRequired ~= "police" and departmentRequired ~= "medic" and departmentRequired ~= "fire" then 
         TriggerClientEvent("chat:addMessage", source, { color = { 255,0,0}, args = {"[000]:", "That is not a valid department."}})
         return
     end 

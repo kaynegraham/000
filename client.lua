@@ -110,7 +110,7 @@ AddEventHandler('000:addBlip', function(coords, callid)
     EndTextCommandSetBlipName(blip)
     SetBlipDisplay(blip, 4)
     SetNewWaypoint(coords.x, coords.y)
-    Wait(300000) -- 5 minutes
+    Wait(Config.timebeforeblipDeletion) -- 5 minutes
     RemoveBlip(blip)
 end)
 
