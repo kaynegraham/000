@@ -3,7 +3,7 @@ game 'gta5'
 
 author 'kaynegraham'
 description 'Advanced 000 Script'
-version '1.0'
+version '1.1.0'
 
 client_scripts {
     'client/*.lua'

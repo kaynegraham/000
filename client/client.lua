@@ -6,14 +6,19 @@ activeUnits = {}
 -- Commands -- 
 RegisterCommand(Config.emergencySystemCommand, function(source, args)
     if clockedOn then 
-        showAlert("You are now off duty", 3500)
+
+        if LocalPlayer.state.department == args[1] then 
+            TriggerEvent('chat:addMessage', {color = {0, 255, 0}, args = {"[Dispatch]", "You are already clocked in as " .. args[1]}})
+            return 
+        else 
+        TriggerEvent('chat:addMessage', {color = {0, 255, 0}, args = {"[Dispatch]", "You are now clocked off"}})
         LocalPlayer.state:set("department", nil)
         clockedOn = false
-        return
     end 
+end
 
     if not args[1] or not args[2] then 
-        showAlert("You must enter a password and department.", 3500)
+        TriggerEvent('chat:addMessage', {color = {0, 255, 0}, args = {"[Dispatch]", "You must enter a department and/or password."}})
         return 
     end 
 
@@ -22,30 +27,21 @@ end)
 
 RegisterCommand("dutystatus", function()
     if clockedOn then 
-        showAlert("You are clocked on in: " .. LocalPlayer.state.department, 3500)
+        TriggerEvent('chat:addMessage', { color = {0, 255, 0}, args = {"[Dispatch]", "You are clocked on as: " .. LocalPlayer.state.department}})
     else
-        showAlert("You are not clocked on.") 
+        TriggerEvent('chat:addMessage', { color = {0, 255, 0}, args = {"[Dispatch]", "You are not clocked on."}})
     end
 end)
-
-
--- Functions -- 
-function showAlert(message, duration)
-    AddTextEntry('000:alert', message)
-    BeginTextCommandDisplayHelp('000:alert')
-    EndTextCommandDisplayHelp(0, false, true, duration)
-end
-
 
 -- Events --
 RegisterNetEvent('000:clockon')
 AddEventHandler('000:clockon', function(args)
     -- Check Password
     if tostring(args[2]) == Config.emergencySystemPassword then 
-        showAlert("You are now on duty", 3500)
+        TriggerEvent('chat:addMessage', { color = {0, 255, 0}, args = {"[Dispatch]", "You are now clocked in as: " .. tostring(args[1])}})
         clockedOn = true 
     else 
-        showAlert("Incorrect Password.", 3500)
+        TriggerEvent('chat:addMessage', { color = {0, 255, 0}, args = {"[Dispatch]", "You entered the incorrect password."}})
         return 
     end
 
@@ -96,8 +92,24 @@ AddEventHandler('000:phoneAnimation', function()
         Wait(100)
     end
 
-    TaskPlayAnim(PlayerPedId(), dict, clip, 1.0, -1, 2500, 50, false, false, false)
+    PhoneProp()
+    TaskPlayAnim(PlayerPedId(), dict, clip, 1.0, 1.0, 2500, 50, false, false, false)
+    Wait(3000)
+    DeleteObject(phone)
 end)
+
+-- Phone Prop -- 
+function PhoneProp()
+    local phoneProp = `prop_amb_phone`
+    local coords = GetEntityCoords(PlayerPedId())
+    local bone = GetPedBoneIndex(PlayerPedId(), 28422) 
+    RequestModel(phoneProp)
+    while not HasModelLoaded(phoneProp) do 
+        Wait(1)
+    end 
+    phone = CreateObject(phoneProp, coords.x, coords.y, coords.z, true, false, false)
+    AttachEntityToEntity(phone, PlayerPedId(), bone, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true, true, false, false, 2, true)
+end
 
 -- Add Blip -- 
 RegisterNetEvent('000:addBlip')
@@ -110,8 +122,47 @@ AddEventHandler('000:addBlip', function(coords, callid)
     EndTextCommandSetBlipName(blip)
     SetBlipDisplay(blip, 4)
     SetNewWaypoint(coords.x, coords.y)
-    Wait(300000) -- 5 minutes
+    Wait(Config.timebeforeblipDeletion) -- 5 minutes
     RemoveBlip(blip)
+end)
+
+-- Input Check -- 
+currentCall = nil 
+callActive = false 
+
+RegisterNetEvent('000:dispatchUnit')
+AddEventHandler('000:dispatchUnit', function(callId, description, location, coords)
+    callActive = true 
+    currentCall = callId
+
+    TriggerEvent('chat:addMessage', {
+        color = {0, 255, 0},
+        args = {"[Dispatch]", "Call ID: **" .. string.upper(callId) .. "** has been generated, caller reports " .. description .. " at: " .. location .. "   Press (Y) to accept the callout"}
+    })
+
+    CreateThread(function()
+        local callAccepted = false 
+        local expireTime = GetGameTimer() + Config.callexpiryTime 
+        while GetGameTimer() < expireTime do 
+            Wait(0)
+            if IsControlJustPressed(1, 246) then
+                if currentCall == callId then 
+                callAccepted = true 
+                TriggerServerEvent('000:acceptCall', callId)
+                break 
+                end
+            end
+        end
+
+        if not callAccepted then 
+            TriggerEvent('chat:addMessage', {
+                color = {255, 0, 0},
+                args = {"[Dispatch]:", "Call ID: **" .. callId ..  "** has expired."}
+            })
+        end
+
+        Wait(500)
+    end)
 end)
 
 
